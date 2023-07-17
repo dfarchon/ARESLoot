@@ -19,12 +19,12 @@ async function main() {
   const ARESLoot = new ethers.Contract(ARESLootAddress!, lootABI, admin);
 
   //   for test
-  const addrs = [user.address];
-  const ranks = [1];
+  // const addrs = [user.address];
+  // const ranks = [1];
 
-  const tx2 = await ARESLoot.setRank(addrs, ranks);
-  await tx2.wait();
-  console.log("tx hash:" + tx2.hash);
+  // const tx2 = await ARESLoot.setRank(addrs, ranks);
+  // await tx2.wait();
+  // console.log("tx hash:" + tx2.hash);
 
   const tokenId = 1;
 
