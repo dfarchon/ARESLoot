@@ -25,8 +25,8 @@ async function main() {
   console.log("Contract Address -> ",ContractAddress.at(-1));
   
   const block = await ethers.provider.getBlockNumber();
-  console.log("block number -> ", block);
-  let messageEvents = await ARESLoot.queryFilter("Message");
+  console.log("block number -> ", block.toString());
+  let messageEvents = await ARESLoot.queryFilter("Message",45191313);
 
   const sendTokenPath = SEND_TOKEN_LOG?.toString();
   const sendTokenContents = fs.readFileSync(sendTokenPath!).toString();
@@ -38,7 +38,7 @@ async function main() {
 
   let needTokenAmount = 0;
   for (let i = 0; i < messageEvents.length; i++) {
-    needTokenAmount += Number(messageEvents[i].args[3].toString());
+    needTokenAmount += 10 * Number(messageEvents[i].args[3].toString());
   }
 
    

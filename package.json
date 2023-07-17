@@ -19,8 +19,8 @@
     "query:dev": "yarn hardhat:dev run scripts/query.ts",
     "batch:dev": "yarn hardhat:dev run scripts/batch.ts",
     "more:dev": "yarn hardhat:dev run scripts/more.ts",
-    "deploy:prod": "yarn hardhat:prod run scripts/deploy.ts"
-    
+    "deploy:prod": "yarn hardhat:prod run scripts/deploy.ts",
+    "batch:prod": "yarn hardhat:prod run scripts/batch.ts"
   },
   "repository": {
     "type": "git",
