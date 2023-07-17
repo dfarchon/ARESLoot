@@ -29,7 +29,6 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         address owner,
         uint tokenId,
         address playerAddr,
-        string teamName,
         uint moreGold,
         uint moreGlory
     );
@@ -38,13 +37,20 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     uint private _tokenIds;
     mapping(uint256 => address) public burnerWalletAddress;
+    mapping(uint256 => string) public playerName;
     mapping(uint256 => string) public teamName;
+    mapping(uint256 => bool) public canNotChange;
     mapping(uint256 => uint256) public gold;
     mapping(uint256 => uint256) public glory;
     mapping(address => uint256) public rank;
 
     modifier notFrozen() {
         require(!frozen, "already frozen");
+        _;
+    }
+
+    modifier onlyEOA() {
+        require(tx.origin == _msgSender(), "only EOA");
         _;
     }
 
@@ -81,6 +87,7 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         require(tokenId > 0 && tokenId <= _tokenIds, "Out of limit");
 
         string[18] memory parts;
+
         parts[
             0
         ] = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.base { fill: #fee761; font-family: serif; font-size: 14px; }</style><rect width="100%" height="100%" fill="#3a4466" /><text x="10" y="20" class="base">';
@@ -99,22 +106,32 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
         parts[6] = '</text><text x="10" y="80" class="base">';
 
-        parts[7] = string(abi.encodePacked("Adventurer"));
+        if (
+            keccak256(abi.encodePacked((playerName[tokenId]))) ==
+            keccak256(abi.encodePacked(("")))
+        ) parts[7] = string(abi.encodePacked("Anonymous Adventurer"));
+        else parts[7] = string(abi.encodePacked(playerName[tokenId]));
 
         parts[8] = '</text><text x="10" y="100" class="base">';
+
         if (
             keccak256(abi.encodePacked((teamName[tokenId]))) ==
             keccak256(abi.encodePacked(("")))
         ) parts[9] = string(abi.encodePacked("DF ARES Community"));
         else parts[9] = string(abi.encodePacked("Team: ", teamName[tokenId]));
+
         parts[10] = '</text><text x="10" y="120" class="base">';
+
         parts[11] = string(abi.encodePacked("Gold +", toString(gold[tokenId])));
+
         parts[12] = '</text><text x="10" y="140" class="base">';
+
         parts[13] = string(
             abi.encodePacked("Glory +", toString(glory[tokenId]))
         );
 
         parts[14] = '</text><text x="10" y="160" class="base">';
+
         if (rank[burnerWalletAddress[tokenId]] == 0) {
             parts[15] = string(abi.encodePacked(""));
         } else
@@ -177,38 +194,76 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     function mint(
         address _burnerWalletAddress,
+        string memory _playerName,
         string memory _teamName,
         uint _gold,
         uint _glory
-    ) public payable nonReentrant notFrozen {
-        uint amount = (_gold + _glory) * 1 ether;
+    ) public payable nonReentrant notFrozen onlyEOA {
+        require(_burnerWalletAddress != address(0), "invalid address");
+        uint balance = balanceOf(_msgSender());
+        uint mintFee = balance == 0 ? 0 : 2 ** (balance - 1);
+        uint amount = (mintFee + _gold + _glory) * 1 ether;
         require(msg.value == amount, "mint: eq");
         ++_tokenIds;
         uint tokenId = _tokenIds;
         _safeMint(_msgSender(), tokenId);
-        burnerWalletAddress[tokenId] = _burnerWalletAddress;
 
+        burnerWalletAddress[tokenId] = _burnerWalletAddress;
+        playerName[tokenId] = _playerName;
         teamName[tokenId] = _teamName;
         gold[tokenId] = _gold;
         glory[tokenId] = _glory;
+
         emit Message(
             _msgSender(),
             tokenId,
             burnerWalletAddress[tokenId],
-            _teamName,
             _gold,
             _glory
         );
     }
 
+    function setPlayerName(
+        uint tokenId,
+        string memory _playerName
+    ) public notFrozen onlyEOA {
+        require(tokenId > 0 && tokenId <= _tokenIds, "Out of limit");
+
+        require(
+            ownerOf(tokenId) == _msgSender() || owner() == _msgSender(),
+            "only Ticket Owner or Contract Owner"
+        );
+
+        if (owner() != _msgSender()) {
+            require(
+                canNotChange[tokenId] == false,
+                "Ticket Owner Can Not Change Name"
+            );
+        } else {
+            canNotChange[tokenId] = true;
+        }
+
+        playerName[tokenId] = _playerName;
+    }
+
     function setTeamName(
         uint tokenId,
         string memory _teamName
-    ) public notFrozen {
+    ) public notFrozen onlyEOA {
+        require(tokenId > 0 && tokenId <= _tokenIds, "Out of limit");
         require(
             ownerOf(tokenId) == _msgSender() || owner() == _msgSender(),
-            "only owner or admin"
+            "only Ticket Owner or Contract Owner"
         );
+
+        if (owner() != _msgSender()) {
+            require(
+                canNotChange[tokenId] == false,
+                "Ticket Owner Can Not Change Name"
+            );
+        } else {
+            canNotChange[tokenId] = true;
+        }
         teamName[tokenId] = _teamName;
     }
 
@@ -216,10 +271,11 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         uint tokenId,
         uint _moreGold,
         uint _moreGlory
-    ) public payable nonReentrant notFrozen {
+    ) public payable nonReentrant notFrozen onlyEOA {
+        require(tokenId > 0 && tokenId <= _tokenIds, "Out of limit");
         require(ownerOf(tokenId) == _msgSender(), "only ticket owner");
-
         uint amount = (_moreGold + _moreGlory) * 1 ether;
+        require(amount > 0, "amount gt 0");
         require(msg.value == amount, "mint: eq");
 
         gold[tokenId] += _moreGold;
@@ -229,7 +285,6 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
             _msgSender(),
             tokenId,
             burnerWalletAddress[tokenId],
-            teamName[tokenId],
             _moreGold,
             _moreGlory
         );

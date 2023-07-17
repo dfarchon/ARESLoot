@@ -2,6 +2,8 @@ import { ethers } from "hardhat";
 import lootABI from "../abi/contracts/ARESLoot.sol/ARESLoot.json";
 import * as fs from "fs";
 
+const {BURNER_WALLET_ADDRESS} = process.env;
+
 async function main() {
   const [admin, user] = await ethers.getSigners();
   const balance = await ethers.provider.getBalance(admin.address);
@@ -18,15 +20,7 @@ async function main() {
 
   const ARESLoot = new ethers.Contract(ARESLootAddress!, lootABI, admin);
 
-  //   for test
-  // const addrs = [user.address];
-  // const ranks = [1];
-
-  // const tx2 = await ARESLoot.setRank(addrs, ranks);
-  // await tx2.wait();
-  // console.log("tx hash:" + tx2.hash);
-
-  const tokenId = 1;
+  const tokenId = 2;
 
   let owner = await ARESLoot.ownerOf(tokenId);
   let tokenURI = await ARESLoot.tokenURI(tokenId);
@@ -35,7 +29,10 @@ async function main() {
   console.log("Token URI -> ");
   console.log(tokenURI);
 
-  let rank = await ARESLoot.rank(user.address);
+  const addr = BURNER_WALLET_ADDRESS?.toString();
+  let rank = await ARESLoot.rank(addr!);
+ 
+  
   console.log("Rank -> " + rank.toString());
 }
 

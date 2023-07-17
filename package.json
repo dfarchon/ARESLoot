@@ -14,6 +14,7 @@
     "ganache": "npx ganache --chain.chainId 31337 --database.dbPath './blockchain/' -m 'change typical hire slam amateur loan grid fix drama electric seed label'  --wallet.defaultBalance 200000  --wallet.totalAccounts 20 --miner.blockTime=2",
     "deploy:dev": "yarn hardhat:dev run scripts/deploy.ts",
     "mint:dev": "yarn hardhat:dev run scripts/mint.ts",
+    "setrank:dev": "yarn hardhat:dev run scripts/setrank.ts",
     "query:dev": "yarn hardhat:dev run scripts/query.ts",
     "batch:dev": "yarn hardhat:dev run scripts/batch.ts"
   },
