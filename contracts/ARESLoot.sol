@@ -3,7 +3,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 /******************************************************
  * ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ *
@@ -25,6 +27,8 @@ import "@openzeppelin/contracts/utils/Base64.sol";
  *****************************************************/
 
 contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
+    using Counters for Counters.Counter;
+
     event Message(
         address owner,
         uint tokenId,
@@ -33,17 +37,23 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     );
 
     bool public frozen;
+
+    Counters.Counter private _tokenIdCounter;
     uint public goldSum;
     uint public glorySum;
     uint public feeSum;
 
-    uint private _tokenIds;
-    mapping(uint256 => address) public burnerWalletAddress;
-    mapping(uint256 => string) public playerName;
-    mapping(uint256 => string) public teamName;
-    mapping(uint256 => bool) public canNotChange;
-    mapping(uint256 => uint256) public gold;
-    mapping(uint256 => uint256) public glory;
+    struct LootStorage {
+        address burnerWalletAddress;
+        string playerName;
+        string teamName;
+        bool canNotChange;
+        uint gold;
+        uint glory;
+    }
+
+    mapping(uint256 => LootStorage) public ARESLootStorage;
+    mapping(address => uint256) public mintCount;
     mapping(address => uint256) public rank;
 
     modifier notFrozen() {
@@ -83,11 +93,45 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         }
     }
 
+    function mint(
+        address _burnerWalletAddress,
+        string memory _playerName,
+        string memory _teamName,
+        uint _gold,
+        uint _glory
+    ) public payable nonReentrant notFrozen onlyEOA {
+        require(_burnerWalletAddress != address(0), "invalid address");
+        uint mintCnt = mintCount[_msgSender()];
+
+        uint fee = mintCnt == 0 ? 0 : 2 ** (mintCnt - 1);
+        uint amount = (fee + _gold + _glory) * 1 ether;
+        require(msg.value == amount, "mint: eq");
+
+        goldSum += _gold;
+        glorySum += _glory;
+        feeSum += fee;
+
+        _tokenIdCounter.increment();
+        uint tokenId = _tokenIdCounter.current();
+
+        _safeMint(_msgSender(), tokenId);
+
+        LootStorage storage lootStorage = ARESLootStorage[tokenId];
+        lootStorage.burnerWalletAddress = _burnerWalletAddress;
+        lootStorage.playerName = _playerName;
+        lootStorage.teamName = _teamName;
+        lootStorage.gold = _gold;
+        lootStorage.glory = _glory;
+
+        if (_gold > 0)
+            emit Message(_msgSender(), tokenId, _burnerWalletAddress, _gold);
+    }
+
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
-        require(tokenId > 0 && tokenId <= _tokenIds, "Out of limit");
-
+        if (!_exists(tokenId)) revert("invalid tokenId");
+        LootStorage storage lootStorage = ARESLootStorage[tokenId];
         string[18] memory parts;
 
         parts[
@@ -103,44 +147,47 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         parts[4] = '</text><text x="10" y="60" class="base">';
 
         parts[5] = string(
-            abi.encodePacked(toAsciiString(burnerWalletAddress[tokenId]))
+            abi.encodePacked(toAsciiString(lootStorage.burnerWalletAddress))
         );
 
         parts[6] = '</text><text x="10" y="80" class="base">';
 
         if (
-            keccak256(abi.encodePacked((playerName[tokenId]))) ==
+            keccak256(abi.encodePacked((lootStorage.playerName))) ==
             keccak256(abi.encodePacked(("")))
         ) parts[7] = string(abi.encodePacked("Anonymous Adventurer"));
-        else parts[7] = string(abi.encodePacked(playerName[tokenId]));
+        else parts[7] = string(abi.encodePacked(lootStorage.playerName));
 
         parts[8] = '</text><text x="10" y="100" class="base">';
 
         if (
-            keccak256(abi.encodePacked((teamName[tokenId]))) ==
+            keccak256(abi.encodePacked(lootStorage.teamName)) ==
             keccak256(abi.encodePacked(("")))
         ) parts[9] = string(abi.encodePacked("DF ARES Community"));
-        else parts[9] = string(abi.encodePacked("Team: ", teamName[tokenId]));
+        else
+            parts[9] = string(abi.encodePacked("Team: ", lootStorage.teamName));
 
         parts[10] = '</text><text x="10" y="120" class="base">';
 
-        parts[11] = string(abi.encodePacked("Gold +", toString(gold[tokenId])));
+        parts[11] = string(
+            abi.encodePacked("Gold +", toString(lootStorage.gold))
+        );
 
         parts[12] = '</text><text x="10" y="140" class="base">';
 
         parts[13] = string(
-            abi.encodePacked("Glory +", toString(glory[tokenId]))
+            abi.encodePacked("Glory +", toString(lootStorage.glory))
         );
 
         parts[14] = '</text><text x="10" y="160" class="base">';
 
-        if (rank[burnerWalletAddress[tokenId]] == 0) {
+        if (rank[lootStorage.burnerWalletAddress] == 0) {
             parts[15] = string(abi.encodePacked(""));
         } else
             parts[15] = string(
                 abi.encodePacked(
                     "Rank # ",
-                    toString(rank[burnerWalletAddress[tokenId]])
+                    toString(rank[lootStorage.burnerWalletAddress])
                 )
             );
 
@@ -194,47 +241,12 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         return output;
     }
 
-    function mint(
-        address _burnerWalletAddress,
-        string memory _playerName,
-        string memory _teamName,
-        uint _gold,
-        uint _glory
-    ) public payable nonReentrant notFrozen onlyEOA {
-        require(_burnerWalletAddress != address(0), "invalid address");
-        uint balance = balanceOf(_msgSender());
-        uint fee = balance == 0 ? 0 : 2 ** (balance - 1);
-        uint amount = (fee + _gold + _glory) * 1 ether;
-        require(msg.value == amount, "mint: eq");
-
-        goldSum += _gold;
-        glorySum += _glory;
-        feeSum += fee;
-
-        ++_tokenIds;
-        uint tokenId = _tokenIds;
-        _safeMint(_msgSender(), tokenId);
-
-        burnerWalletAddress[tokenId] = _burnerWalletAddress;
-        playerName[tokenId] = _playerName;
-        teamName[tokenId] = _teamName;
-        gold[tokenId] = _gold;
-        glory[tokenId] = _glory;
-
-        if (_gold > 0)
-            emit Message(
-                _msgSender(),
-                tokenId,
-                burnerWalletAddress[tokenId],
-                _gold
-            );
-    }
-
     function setPlayerName(
         uint tokenId,
         string memory _playerName
     ) public notFrozen onlyEOA {
-        require(tokenId > 0 && tokenId <= _tokenIds, "Out of limit");
+        require(_exists(tokenId), "invalid tokenId");
+        LootStorage storage lootStorage = ARESLootStorage[tokenId];
 
         require(
             ownerOf(tokenId) == _msgSender() || owner() == _msgSender(),
@@ -243,21 +255,23 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
         if (owner() != _msgSender()) {
             require(
-                canNotChange[tokenId] == false,
+                lootStorage.canNotChange == false,
                 "Ticket Owner Can Not Change Name"
             );
         } else {
-            canNotChange[tokenId] = true;
+            lootStorage.canNotChange = true;
         }
 
-        playerName[tokenId] = _playerName;
+        lootStorage.playerName = _playerName;
     }
 
     function setTeamName(
         uint tokenId,
         string memory _teamName
     ) public notFrozen onlyEOA {
-        require(tokenId > 0 && tokenId <= _tokenIds, "Out of limit");
+        require(_exists(tokenId), "invalid tokenId");
+        LootStorage storage lootStorage = ARESLootStorage[tokenId];
+
         require(
             ownerOf(tokenId) == _msgSender() || owner() == _msgSender(),
             "only Ticket Owner or Contract Owner"
@@ -265,13 +279,14 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
         if (owner() != _msgSender()) {
             require(
-                canNotChange[tokenId] == false,
+                lootStorage.canNotChange == false,
                 "Ticket Owner Can Not Change Name"
             );
         } else {
-            canNotChange[tokenId] = true;
+            lootStorage.canNotChange = true;
         }
-        teamName[tokenId] = _teamName;
+
+        lootStorage.teamName = _teamName;
     }
 
     function more(
@@ -279,7 +294,9 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         uint _moreGold,
         uint _moreGlory
     ) public payable nonReentrant notFrozen onlyEOA {
-        require(tokenId > 0 && tokenId <= _tokenIds, "Out of limit");
+        require(_exists(tokenId), "invalid tokenId");
+        LootStorage storage lootStorage = ARESLootStorage[tokenId];
+
         require(ownerOf(tokenId) == _msgSender(), "only ticket owner");
         uint amount = (_moreGold + _moreGlory) * 1 ether;
         require(amount > 0, "amount gt 0");
@@ -288,14 +305,14 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         goldSum += _moreGold;
         glorySum += _moreGlory;
 
-        gold[tokenId] += _moreGold;
-        glory[tokenId] += _moreGlory;
+        lootStorage.gold += _moreGold;
+        lootStorage.glory += _moreGlory;
 
         if (_moreGold > 0)
             emit Message(
                 _msgSender(),
                 tokenId,
-                burnerWalletAddress[tokenId],
+                lootStorage.burnerWalletAddress,
                 _moreGold
             );
     }
