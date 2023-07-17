@@ -29,11 +29,13 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         address owner,
         uint tokenId,
         address playerAddr,
-        uint moreGold,
-        uint moreGlory
+        uint moreGold
     );
 
     bool public frozen;
+    uint public goldSum;
+    uint public glorySum;
+    uint public feeSum;
 
     uint private _tokenIds;
     mapping(uint256 => address) public burnerWalletAddress;
@@ -201,9 +203,14 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ) public payable nonReentrant notFrozen onlyEOA {
         require(_burnerWalletAddress != address(0), "invalid address");
         uint balance = balanceOf(_msgSender());
-        uint mintFee = balance == 0 ? 0 : 2 ** (balance - 1);
-        uint amount = (mintFee + _gold + _glory) * 1 ether;
+        uint fee = balance == 0 ? 0 : 2 ** (balance - 1);
+        uint amount = (fee + _gold + _glory) * 1 ether;
         require(msg.value == amount, "mint: eq");
+
+        goldSum += _gold;
+        glorySum += _glory;
+        feeSum += fee;
+
         ++_tokenIds;
         uint tokenId = _tokenIds;
         _safeMint(_msgSender(), tokenId);
@@ -214,13 +221,13 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         gold[tokenId] = _gold;
         glory[tokenId] = _glory;
 
-        emit Message(
-            _msgSender(),
-            tokenId,
-            burnerWalletAddress[tokenId],
-            _gold,
-            _glory
-        );
+        if (_gold > 0)
+            emit Message(
+                _msgSender(),
+                tokenId,
+                burnerWalletAddress[tokenId],
+                _gold
+            );
     }
 
     function setPlayerName(
@@ -278,16 +285,19 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         require(amount > 0, "amount gt 0");
         require(msg.value == amount, "mint: eq");
 
+        goldSum += _moreGold;
+        glorySum += _moreGlory;
+
         gold[tokenId] += _moreGold;
         glory[tokenId] += _moreGlory;
 
-        emit Message(
-            _msgSender(),
-            tokenId,
-            burnerWalletAddress[tokenId],
-            _moreGold,
-            _moreGlory
-        );
+        if (_moreGold > 0)
+            emit Message(
+                _msgSender(),
+                tokenId,
+                burnerWalletAddress[tokenId],
+                _moreGold
+            );
     }
 
     // just some functions
