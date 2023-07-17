@@ -2,6 +2,9 @@ import { ethers } from "hardhat";
 import lootABI from "../abi/contracts/ARESLoot.sol/ARESLoot.json";
 import * as fs from "fs";
 
+
+const {BURNER_WALLET_ADDRESS} = process.env;
+
 async function main() {
   const [admin, user] = await ethers.getSigners();
   const balance = await ethers.provider.getBalance(admin.address);
@@ -25,8 +28,9 @@ async function main() {
     // gasLimit: 2000000
   };
 
+  const addr = BURNER_WALLET_ADDRESS?.toString();
   const tx = await ARESLoot.mint(
-    user.address,
+    addr!,
     "DF Archon",
     goldAmount,
     gloryAmount,
