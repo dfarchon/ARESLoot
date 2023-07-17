@@ -9,6 +9,7 @@
     "lint": "prettier --list-different --plugin=prettier-plugin-solidity 'contracts/**/*.sol'",
     "format": "prettier --write 'contracts/**/*.sol'",
     "hardhat:dev": "hardhat --network localhost",
+    "hardhat:prod": "hardhat --network polygon",
     "export-abi": "hardhat export-abi",
     "clear-abi": "hardhat clear-abi",
     "ganache": "npx ganache --chain.chainId 31337 --database.dbPath './blockchain/' -m 'change typical hire slam amateur loan grid fix drama electric seed label'  --wallet.defaultBalance 200000  --wallet.totalAccounts 20 --miner.blockTime=2",
@@ -17,7 +18,9 @@
     "setrank:dev": "yarn hardhat:dev run scripts/setrank.ts",
     "query:dev": "yarn hardhat:dev run scripts/query.ts",
     "batch:dev": "yarn hardhat:dev run scripts/batch.ts",
-    "more:dev": "yarn hardhat:dev run scripts/more.ts"
+    "more:dev": "yarn hardhat:dev run scripts/more.ts",
+    "deploy:prod": "yarn hardhat:prod run scripts/deploy.ts"
+    
   },
   "repository": {
     "type": "git",

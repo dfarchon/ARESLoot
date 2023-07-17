@@ -14,13 +14,13 @@ const altlayer = {
 };
 
 
-// const polygon = {
-//   url: process.env.ALTLAYER_RPC_URL,
-//   accounts: {
-//     mnemonic: process.env.DEPLOYER_MNEMONIC,
-//   },
-//   chainId: Number(process.env.ALTLAYER_CHAINID),
-// };
+const polygon = {
+  url: process.env.POLYGON_RPC_URL,
+  accounts: {
+    mnemonic: process.env.POLYGON_MNEMONIC,
+  },
+  chainId: Number(process.env.POLYGON_CHAINID),
+};
 
 
 const config: HardhatUserConfig = {
@@ -28,7 +28,7 @@ const config: HardhatUserConfig = {
 
   networks: {
     ...(process.env.ALTLAYER_MNEMONIC? {altlayer}: undefined),
-
+    ...(process.env.POLYGON_MNEMONIC? {polygon}: undefined),
     localhost: {
       url: 'http://localhost:8545/',
       accounts: {
@@ -40,6 +40,10 @@ const config: HardhatUserConfig = {
 
 
 
+  },
+
+  etherscan:{
+    apiKey: process.env.POLYGONSCAN_API_KEY,
   },
   
   solidity: {

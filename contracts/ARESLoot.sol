@@ -67,7 +67,7 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     constructor() ERC721("ARESLoot v0.1.1", "ARES") Ownable() {
-        frozen = false;
+        frozen = true;
     }
 
     function freeze() public onlyOwner notFrozen {
