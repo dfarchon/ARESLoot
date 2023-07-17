@@ -4,6 +4,7 @@ import * as fs from "fs";
 
 const {BURNER_WALLET_ADDRESS} = process.env;
 
+
 async function main() {
   const [admin, user] = await ethers.getSigners();
   const balance = await ethers.provider.getBalance(admin.address);
@@ -20,20 +21,21 @@ async function main() {
 
   const ARESLoot = new ethers.Contract(ARESLootAddress!, lootABI, admin);
 
-  const tokenId = 1;
-
-  let owner = await ARESLoot.ownerOf(tokenId);
-  let tokenURI = await ARESLoot.tokenURI(tokenId);
-  console.log("Token Id -> " + tokenId);
-  console.log("Owner -> " + owner);
-  console.log("Token URI -> ");
-  console.log(tokenURI);
 
   const addr = BURNER_WALLET_ADDRESS?.toString();
-  let rank = await ARESLoot.rank(addr!);
- 
+  const tokenId = 1;
+  const moreGold = 1;
+  const moreGlory = 1;
   
-  console.log("Rank -> " + rank.toString());
+  let total =moreGold + moreGlory;
+  let overrides = {
+    value: ethers.parseUnits(total.toString(), "ether"),
+    // gasLimit: 2000000
+  };
+
+  const tx2 = await ARESLoot.more(tokenId,moreGold,moreGlory,overrides);
+  await tx2.wait();
+  console.log("tx hash:" + tx2.hash);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

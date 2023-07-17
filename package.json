@@ -16,7 +16,8 @@
     "mint:dev": "yarn hardhat:dev run scripts/mint.ts",
     "setrank:dev": "yarn hardhat:dev run scripts/setrank.ts",
     "query:dev": "yarn hardhat:dev run scripts/query.ts",
-    "batch:dev": "yarn hardhat:dev run scripts/batch.ts"
+    "batch:dev": "yarn hardhat:dev run scripts/batch.ts",
+    "more:dev": "yarn hardhat:dev run scripts/more.ts"
   },
   "repository": {
     "type": "git",
