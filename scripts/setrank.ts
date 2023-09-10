@@ -2,8 +2,7 @@ import { ethers } from "hardhat";
 import lootABI from "../abi/contracts/ARESLoot.sol/ARESLoot.json";
 import * as fs from "fs";
 
-const {BURNER_WALLET_ADDRESS} = process.env;
-
+const { BURNER_WALLET_ADDRESS } = process.env;
 
 async function main() {
   const [admin, user] = await ethers.getSigners();
@@ -13,6 +12,7 @@ async function main() {
 
   const filePath = process.env.DEPLOY_LOG?.toString();
 
+
   const fileContents = fs.readFileSync(filePath!).toString();
   const ContractAddress = fileContents.split("\n").filter((k) => k.length > 0);
   console.log(ContractAddress);
@@ -20,21 +20,33 @@ async function main() {
   const ARESLootAddress = ContractAddress.at(-1);
 
   const ARESLoot = new ethers.Contract(ARESLootAddress!, lootABI, admin);
+  // console.log(ARESLoot);
 
-    // for test
-const addr = BURNER_WALLET_ADDRESS?.toString();
 
-  const addrs = [addr!];
-  const ranks = [1];
+  
+  const rankFilePath = process.env.RANKLIST?.toString();
+  const rankContents = fs.readFileSync(rankFilePath!).toString();
+  const lines = rankContents.split("\n").filter(k=>k.length>0);
+  // console.log(lines);
+
+  const addrs = [];
+  const ranks = [];
+
+  for(let i = 0;i<lines.length;i++){
+    const line = lines[i].split('  ');
+    console.log(i+1,line[1]);
+
+    addrs.push(line[1]);
+    ranks.push(i+1);
+   
+  }
+
 
   const tx2 = await ARESLoot.setRank(addrs, ranks);
   await tx2.wait();
   console.log("tx hash:" + tx2.hash);
 
-
-
-  let rank = await ARESLoot.rank(addr!);
-  console.log("Rank -> " + rank.toString());
+  
 }
 
 // We recommend this pattern to be able to use async/await everywhere

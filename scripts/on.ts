@@ -5,6 +5,9 @@ import * as fs from "fs";
 const { ALTLAYER_RPC_URL, ALTLAYER_PRIVATEKEY, DEPLOY_LOG, SEND_TOKEN_LOG } =
   process.env;
 
+
+const provider =  new ethers.JsonRpcProvider(ALCHEMY_MAINNET_URL);
+
 async function main() {
   // On Layer 1
   const [addr] = await ethers.getSigners();
@@ -23,52 +26,27 @@ async function main() {
   );
 
   console.log("Contract Address -> ",ContractAddress.at(-1));
-  
-  const block = await ethers.provider.getBlockNumber();
-  console.log("block number -> ", block.toString());
-  let messageEvents = await ARESLoot.queryFilter("Message",45283430);
 
   const sendTokenPath = SEND_TOKEN_LOG?.toString();
-  const sendTokenContents = fs.readFileSync(sendTokenPath!).toString();
-  const sendTokenLogs = sendTokenContents
-    .split("\n")
-    .filter((k) => k.length > 0);
-
-  messageEvents = messageEvents.slice(sendTokenLogs.length);
-
-  let needTokenAmount = 0;
-  for (let i = 0; i < messageEvents.length; i++) {
-    needTokenAmount += 10 * Number(messageEvents[i].args[3].toString());
-  }
-
-   
-  console.log("Need Token Amount -> "+ needTokenAmount.toString() +" $RES");
-  const balance = await altlayerProvider.getBalance(altlayerAdmin.address);
-  console.log("Admin Balance -> ", ethers.formatEther(balance)+" $RES");
-  console.log('Event Amount -> ',messageEvents.length);
-
-  
-
-  let needTokenAmountInWei = ethers.getBigInt(ethers.parseUnits(needTokenAmount.toString()));
-  // console.log(needTokenAmountInWei);
-  // console.log(balance);
-
-  if(needTokenAmountInWei>balance){
-    console.log("Admin Need More Token");
-    return;
-  }
 
 
-  for (let i = 0; i < messageEvents.length; i++) {
-    const event = messageEvents[i];
+//   _msgSender(), tokenId, _burnerWalletAddress, _gold);
+  ARESLoot.on("Message",async (sender,tokenId,gamer,_gold)=>{
 
-    const address = event.args[2].toString().toLowerCase();
-    const amount = (Number(event.args[3])*10).toString();
+    console.log('==============================================')
+    console.log('tokenId', tokenId.toString());
+    console.log('gamer',gamer);
+    console.log('gold',_gold.toString());
 
+    const address = gamer.toString().toLowerCase();
+    const amount = (Number(_gold)*10).toString();
     const isAddress = ethers.isAddress(address);
-
+    try{
     if (!isAddress) {
-      throw new Error(`Address ${address} is NOT a valid address.`);
+        throw new Error(`Address ${address} is NOT a valid address.`);
+      }
+    }catch(e){
+        console.error(e);
     }
 
 
@@ -89,15 +67,11 @@ async function main() {
     const ctx = address+','+amount+'\n';
     fs.writeFileSync(sendTokenPath!,ctx,{flag:"a"});
     
-  }
+  })
 
-  //   const tokenId = 1;
-  //   let owner = await ARESLoot.ownerOf(tokenId);
-  //   let tokenURI = await ARESLoot.tokenURI(tokenId);
-  //   console.log("Token Id -> " + tokenId);
-  //   console.log("Owner -> " + owner);
-  //   console.log("Token URI -> ");
-  //   console.log(tokenURI);
+
+
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -20,7 +20,10 @@
     "batch:dev": "yarn hardhat:dev run scripts/batch.ts",
     "more:dev": "yarn hardhat:dev run scripts/more.ts",
     "deploy:prod": "yarn hardhat:prod run scripts/deploy.ts",
-    "batch:prod": "yarn hardhat:prod run scripts/batch.ts"
+    "batch:prod": "yarn hardhat:prod run scripts/batch.ts",
+    "on:prod": "yarn hardhat:prod run scripts/on.ts",
+    "loop:prod": "yarn hardhat:prod run scripts/loop.ts",
+    "setrank:prod": "yarn hardhat:prod run scripts/setrank.ts"
   },
   "repository": {
     "type": "git",
