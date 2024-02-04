@@ -1,3 +1,8 @@
+# ARESLoot v0.1.2
+
+<img width="512" alt="ARESLoot-v0 1 Round 2" src="https://github.com/dfarchon/ARESLoot/assets/25214732/2480231f-288f-4b38-9f4f-51d82f20fd55">
+
+
 # ARESLoot v0.1.1
 
 
