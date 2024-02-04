@@ -1,60 +1,52 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "hardhat-abi-exporter";
 import "dotenv/config";
-import "hardhat-abi-exporter"
+
+import "./task/deploy";
+import "./task/query";
+import "./task/mint";
+
+const { DEPLOYER_MNEMONIC } = process.env;
 
 
-
-const altlayer = {
-  url: process.env.ALTLAYER_RPC_URL,
+const localhost = {
+  url: process.env.LOCALHOST_RPC_URL,
   accounts: {
-    mnemonic: process.env.ALTLAYER_MNEMONIC,
+    // Same mnemonic used in the .env.example
+    mnemonic: process.env.DEPLOYER_MNEMONIC,
   },
-  chainId: Number(process.env.ALTLAYER_CHAINID),
+  chainId: Number(process.env.LOCALHOST_CHAINID)
 };
 
-
-const polygon = {
-  url: process.env.POLYGON_RPC_URL,
+const redstoneTN = {
+  url: process.env.REDSTONE_TESTNET_RPC_URL,
   accounts: {
-    mnemonic: process.env.POLYGON_MNEMONIC,
+    mnemonic: process.env.DEPLOYER_MNEMONIC,
   },
-  chainId: Number(process.env.POLYGON_CHAINID),
+  chainId: Number(process.env.REDSTONE_TESTNET_CHAINID),
 };
 
 
 const config: HardhatUserConfig = {
-  defaultNetwork: 'hardhat',
-
+  defaultNetwork: "localhost",
   networks: {
-    ...(process.env.ALTLAYER_MNEMONIC? {altlayer}: undefined),
-    ...(process.env.POLYGON_MNEMONIC? {polygon}: undefined),
-    localhost: {
-      url: 'http://localhost:8545/',
-      accounts: {
-        // Same mnemonic used in the .env.example
-        mnemonic: process.env.TEST_MNEMONIC,
-      },
-      chainId: 31337,
-    },
-
-
-
+    // Check for a DEPLOYER_MNEMONIC before we add  network to the list of networks
+    ...(DEPLOYER_MNEMONIC ? { localhost } : undefined),
+    ...(DEPLOYER_MNEMONIC? {redstoneTN}:undefined)
   },
 
-  etherscan:{
-    apiKey: process.env.POLYGONSCAN_API_KEY,
-  },
-  
   solidity: {
-    version: '0.8.19',
+    version: "0.8.23",
     settings: {
       optimizer: {
         enabled: true,
         runs: 200
-      }
+      },
+      viaIR: true,
     },
-  }
+  },
+
 };
 
 export default config;
