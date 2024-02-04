@@ -21,8 +21,6 @@ async function queryPlayerSilver(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-
-
   const ARESLoot = new hre.ethers.Contract(
     aresLootAddress!,
     aresLootABI,
@@ -36,4 +34,41 @@ async function queryPlayerSilver(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
   console.log("Owner -> " + owner);
   console.log("Token URI -> ");
   console.log(tokenURI);
+}
+
+task("analysis", "query burn <=> main").setAction(queryMetadata);
+
+async function queryMetadata(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
+  // need to force a compile for tasks
+  await hre.run("compile");
+
+  const [player] = await hre.ethers.getSigners();
+
+  const filePath = process.env.DEPLOY_LOG?.toString();
+
+  const fileContents = fs.readFileSync(filePath!).toString();
+  const ContractAddress = fileContents.split("\n").filter((k) => k.length > 0);
+
+  const ARESLootAddress = ContractAddress.at(-1);
+  const aresLootAddress = ARESLootAddress;
+
+  const ARESLoot = new hre.ethers.Contract(
+    aresLootAddress!,
+    aresLootABI,
+    player
+  );
+
+  const supply = await ARESLoot.totalSupply();
+
+  const beginTokenId = 46;
+  let ids = [];
+  for(let i=0;i<supply;i++){
+    const id = i+beginTokenId;
+    ids.push(id);
+  }
+  const metadata1 = await ARESLoot.bulkGetMetadata1(ids);
+
+  for(let i = 0;i<metadata1.length;i++){
+    console.log(metadata1[i].burnerAccount, metadata1[i].mainAccount);
+  }
 }

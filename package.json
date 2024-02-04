@@ -15,9 +15,11 @@
     "deploy:dev": "yarn hardhat:dev deploy",
     "mint:dev": "yarn hardhat:dev mint",
     "query:dev": "yarn hardhat:dev query",
+    "analysis:dev": "yarn hardhat:dev analysis",
     "deploy:prod": "yarn hardhat:prod deploy",
     "mint:prod": "yarn hardhat:prod mint",
-    "query:prod": "yarn hardhat:prod query"
+    "query:prod": "yarn hardhat:prod query",
+    "analysis:prod": "yarn hardhat:prod analysis"
   },
   "author": "DF Archon",
   "license": "MIT",

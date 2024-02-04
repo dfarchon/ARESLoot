@@ -177,6 +177,36 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         }
     }
 
+    function adminChangeName(
+        uint tokenId,
+        string memory playerName,
+        string memory teamName
+    ) public notFrozen exists(tokenId) onlyEOA onlyOwner {
+        Metadata1 storage metadata1 = metadataStorage1[tokenId];
+        metadata1.playerName = playerName;
+        metadata1.teamName = teamName;
+    }
+
+    // analysis
+
+    function bulkGetMetadata1(
+        uint256[] calldata ids
+    ) public view returns (Metadata1[] memory ret) {
+        ret = new Metadata1[](ids.length);
+        for (uint256 i = 0; i < ids.length; i++) {
+            ret[i] = metadataStorage1[ids[i]];
+        }
+    }
+
+    function bulkGetMetadata2(
+        uint256[] calldata ids
+    ) public view returns (Metadata2[] memory ret) {
+        ret = new Metadata2[](ids.length);
+        for (uint256 i = 0; i < ids.length; i++) {
+            ret[i] = metadataStorage2[ids[i]];
+        }
+    }
+
     // player
     function setMainAccount(address mainAccount) public {
         require(DFAresContract.isWhitelisted(_msgSender()), "not whitelisted");
@@ -240,7 +270,7 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     function hardRefreshMetadata(
         uint256 tokenId
-    ) public nonReentrant notFrozen onlyEOA {
+    ) public nonReentrant notFrozen exists(tokenId) onlyEOA {
         Metadata1 storage metadata1 = metadataStorage1[tokenId];
         Metadata2 storage metadata2 = metadataStorage2[tokenId];
         address burnerAccount = metadata1.burnerAccount;

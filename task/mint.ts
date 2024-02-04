@@ -17,8 +17,9 @@ task("mint", "mint NFT")
 
     const fileContents = fs.readFileSync(filePath!).toString();
     const ContractAddress = fileContents.split("\n").filter((k) => k.length > 0);
-    console.log(ContractAddress);
+    // console.log(ContractAddress);
     const ARESLootAddress = ContractAddress.at(-1);
+    console.log('contract address: ',ARESLootAddress);
     const aresLootAddress = ARESLootAddress;
     
     const ARESLoot = new hre.ethers.Contract(aresLootAddress!, aresLootABI, account1);
