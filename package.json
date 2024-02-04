@@ -29,8 +29,8 @@
     "type": "git",
     "url": "git+https://github.com/dfarchon/ARESLoot.git"
   },
-  "author": "DF Archon",
-  "license": "GPL-3.0",
+  "author": "DFArchon",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/dfarchon/ARESLoot/issues"
   },
