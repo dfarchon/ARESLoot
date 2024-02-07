@@ -297,6 +297,12 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         metadata2.ifFirstHat = DFAresContract.getFirstHat() == burnerAccount;
     }
 
+    function batchHardRefreshMetadata(uint256[] memory tokenIds) public {
+        for(uint i = 0;i<tokenIds.length;i++){
+            hardRefreshMetadata(tokenIds[i]);
+        }
+    }
+
     function tokenURI(
         uint256 tokenId
     ) public view override exists(tokenId) returns (string memory) {

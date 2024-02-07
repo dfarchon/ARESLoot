@@ -6,6 +6,8 @@ import "dotenv/config";
 import "./task/deploy";
 import "./task/query";
 import "./task/mint";
+import "./task/admin";
+
 
 const { DEPLOYER_MNEMONIC } = process.env;
 

@@ -18,8 +18,10 @@ task("deploy", "deploy contracts")
     console.log(hre.ethers.formatEther(balance), "ETH");
  
     const Loot = await hre.ethers.getContractFactory("ARESLoot");
-
-    const gameAddress ='0x8950bab77f29e8f81e6f78aea0a79badd88eeb13';
+    // test
+    // const gameAddress ='0x8950bab77f29e8f81e6f78aea0a79badd88eeb13';
+    // round 2 
+    const gameAddress = '0x9bebf120d985cb8835634e3c8565d320f79aac76';
     const loot = await Loot.deploy(gameAddress);
   
     await loot.waitForDeployment();
