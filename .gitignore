@@ -18,3 +18,6 @@ local
 .DS_Store
 yarn-error.log
 yarn.lock
+
+out
+package-lock.json
