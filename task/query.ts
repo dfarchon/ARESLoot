@@ -1,6 +1,6 @@
 import { task, types } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import aresLootABI from "../abi/contracts/ARESLoot.sol/ARESLoot.json";
+
 import * as fs from "fs";
 
 task("query", "get player info").setAction(queryPlayerSilver);
@@ -16,16 +16,13 @@ async function queryPlayerSilver(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
 
   const fileContents = fs.readFileSync(filePath!).toString();
   const ContractAddress = fileContents.split("\n").filter((k) => k.length > 0);
-  console.log(ContractAddress);
+  // console.log(ContractAddress);
 
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = new hre.ethers.Contract(
-    aresLootAddress!,
-    aresLootABI,
-    player
-  );
+  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+
 
   const tokenId = 46;
   let owner = await ARESLoot.ownerOf(tokenId);
@@ -52,13 +49,11 @@ async function queryMetadata(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = new hre.ethers.Contract(
-    aresLootAddress!,
-    aresLootABI,
-    player
-  );
+  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+
 
   const supply = await ARESLoot.totalSupply();
+  console.log(supply.toString());
 
   const beginTokenId = 46;
   let ids = [];
@@ -69,6 +64,7 @@ async function queryMetadata(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
   const metadata1 = await ARESLoot.bulkGetMetadata1(ids);
 
   for(let i = 0;i<metadata1.length;i++){
-    console.log(metadata1[i].burnerAccount, metadata1[i].mainAccount);
+    console.log(metadata1[i].burnerAccount.toLowerCase(), metadata1[i].mainAccount.toLowerCase());
   }
 }
+

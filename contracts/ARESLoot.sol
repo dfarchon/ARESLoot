@@ -106,8 +106,10 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     // burnerAccount => mainAccount
     mapping(address => address) burnerToMain;
 
-    // burnerAccount => Has it been minted already?
-    mapping(address => bool) minted;
+    // burnerAccount => minted state
+    // minted == 0, not minted
+    // minted !=0, minted = tokenId
+    mapping(address => uint) minted;
 
     // burnerAccount => role
     // 0 => adventurer
@@ -187,7 +189,37 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         metadata1.teamName = teamName;
     }
 
+    function adminChangeMainAccount(
+        uint tokenId,
+        address _mainAccount
+    ) public notFrozen exists(tokenId) onlyEOA onlyOwner {
+        Metadata1 storage metadata1 = metadataStorage1[tokenId];
+        metadata1.mainAccount = _mainAccount;
+    }
+
     // analysis
+
+    function getBurnerToMain(
+        address burnerAccount
+    ) public view returns (address) {
+        return burnerToMain[burnerAccount];
+    }
+
+    function getMinted(address burnerAccount) public view returns (uint) {
+        return minted[burnerAccount];
+    }
+
+    function getMetadata1(
+        uint256 id
+    ) public view returns (Metadata1 memory ret) {
+        return metadataStorage1[id];
+    }
+
+    function getMetadata2(
+        uint256 id
+    ) public view returns (Metadata2 memory ret) {
+        return metadataStorage2[id];
+    }
 
     function bulkGetMetadata1(
         uint256[] calldata ids
@@ -208,27 +240,20 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     // player
-    function setMainAccount(address mainAccount) public {
-        require(DFAresContract.isWhitelisted(_msgSender()), "not whitelisted");
-        require(mainAccount != address(0), "not zero address");
-        require(_msgSender() != mainAccount, "burnerAccount != mainAccount");
-        burnerToMain[_msgSender()] = mainAccount;
-    }
-
     function mint(
-        address burnerAccount,
+        address mainAccount,
         string memory playerName,
         string memory teamName
     ) public nonReentrant notFrozen onlyEOA {
+        address burnerAccount = _msgSender();
+
         require(DFAresContract.isWhitelisted(burnerAccount), "not whitelisted");
-        require(
-            burnerToMain[burnerAccount] == _msgSender(),
-            "only main account"
-        );
+        require(mainAccount != address(0), "not zero address");
+        require(burnerAccount != mainAccount, "burnerAccount != mainAccount");
 
         require(len(playerName) <= 20, "player name too long");
         require(len(teamName) <= 40, "team name too long");
-        require(minted[burnerAccount] == false, "minted");
+        require(minted[burnerAccount] == 0, "minted");
 
         // Tip: need admin to upload ranklist first
         Player memory player = DFAresContract.players(burnerAccount);
@@ -241,7 +266,8 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
         uint tokenId = ++_tokenIdCounter;
 
-        minted[burnerAccount] = true;
+        burnerToMain[burnerAccount] = mainAccount;
+        minted[burnerAccount] = tokenId;
 
         Metadata1 storage metadata1 = metadataStorage1[tokenId];
         Metadata2 storage metadata2 = metadataStorage2[tokenId];
@@ -249,7 +275,7 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         metadata1.playerName = playerName;
         metadata1.teamName = teamName;
         metadata1.homePlanetId = player.homePlanetId;
-        metadata1.mainAccount = _msgSender();
+        metadata1.mainAccount = mainAccount;
         metadata1.burnerAccount = burnerAccount;
         metadata1.rank = player.finalRank;
         metadata1.score = DFAresContract.getScore(burnerAccount);
@@ -279,8 +305,6 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         metadata1.role = roles[burnerAccount];
 
         metadata1.homePlanetId = player.homePlanetId;
-        metadata1.mainAccount = _msgSender();
-        metadata1.burnerAccount = burnerAccount;
         metadata1.rank = player.finalRank;
         metadata1.score = DFAresContract.getScore(burnerAccount);
         metadata1.silver = player.silver;
@@ -298,7 +322,7 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     function batchHardRefreshMetadata(uint256[] memory tokenIds) public {
-        for(uint i = 0;i<tokenIds.length;i++){
+        for (uint i = 0; i < tokenIds.length; i++) {
             hardRefreshMetadata(tokenIds[i]);
         }
     }
@@ -308,44 +332,65 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ) public view override exists(tokenId) returns (string memory) {
         Metadata1 storage metadata1 = metadataStorage1[tokenId];
         Metadata2 storage metadata2 = metadataStorage2[tokenId];
-        string[30] memory parts;
+        string memory cache;
+        string memory output;
 
-        parts[
-            0
-        ] = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.base { fill: #004c3f; font-family: serif; font-size: 14px; }</style><rect width="100%" height="100%" fill="#ffb4c1" /><text x="10" y="20" class="base">';
+        //part[0]
+        cache = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.base { fill: #004c3f; font-family: serif; font-size: 14px; }</style><rect width="100%" height="100%" fill="#ffb4c1" /><text x="10" y="20" class="base">';
+        output = string(abi.encodePacked(output, cache));
 
-        parts[1] = string(abi.encodePacked("DF ARES v0.1 Round 2"));
-        parts[2] = '</text><text x="10" y="40" class="base">';
+        //parts[1]
+        cache = string(abi.encodePacked("DF ARES v0.1 Round 2"));
+        output = string(abi.encodePacked(output, cache));
 
-        parts[3] = string(abi.encodePacked("Ticket # ", toString(tokenId)));
-        parts[4] = '</text><text x="10" y="60" class="base">';
+        //parts[2]
+        cache = '</text><text x="10" y="40" class="base">';
+        output = string(abi.encodePacked(output, cache));
 
+        //parts[3]
+        cache = string(abi.encodePacked("Ticket # ", toString(tokenId)));
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[4]
+        cache = '</text><text x="10" y="60" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[5]
         if (
             keccak256(abi.encodePacked((metadata1.playerName))) ==
             keccak256(abi.encodePacked(("")))
         ) {
             if (metadata1.role == 0)
-                parts[5] = string(abi.encodePacked("Anonymous Adventurer"));
-            else parts[5] = string(abi.encodePacked("Anonymous Contributor"));
+                cache = string(abi.encodePacked("Anonymous Adventurer"));
+            else cache = string(abi.encodePacked("Anonymous Contributor"));
         } else {
             if (metadata1.role == 0)
-                parts[5] = string(abi.encodePacked("Adventurer: "));
-            else parts[5] = string(abi.encodePacked("Contributor: "));
+                cache = string(abi.encodePacked("Adventurer: "));
+            else cache = string(abi.encodePacked("Contributor: "));
 
-            parts[5] = string(abi.encodePacked(parts[5], metadata1.playerName));
+            cache = string(abi.encodePacked(cache, metadata1.playerName));
         }
+        output = string(abi.encodePacked(output, cache));
 
-        parts[6] = '</text><text x="10" y="80" class="base">';
+        // parts[6]
+        cache = '</text><text x="10" y="80" class="base">';
+        output = string(abi.encodePacked(output, cache));
 
+        // parts[7]
         if (
             keccak256(abi.encodePacked((metadata1.teamName))) !=
             keccak256(abi.encodePacked(("")))
         ) {
-            parts[7] = string(abi.encodePacked(metadata1.teamName));
-        } else parts[7] = string(abi.encodePacked("Dark Forest Community"));
+            cache = string(abi.encodePacked(metadata1.teamName));
+        } else cache = string(abi.encodePacked("Dark Forest Community"));
+        output = string(abi.encodePacked(output, cache));
 
-        parts[8] = '</text><text x="10" y="100" class="base">';
-        parts[9] = string(
+        // parts[8]
+        cache = '</text><text x="10" y="100" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        // parts[9]
+        cache = string(
             abi.encodePacked(
                 "Main",
                 unicode"🌍",
@@ -353,9 +398,14 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
                 toAsciiString(metadata1.mainAccount)
             )
         );
+        output = string(abi.encodePacked(output, cache));
 
-        parts[10] = '</text><text x="10" y="120" class="base">';
-        parts[11] = string(
+        //parts[10]
+        cache = '</text><text x="10" y="120" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[11]
+        cache = string(
             abi.encodePacked(
                 "Burner",
                 unicode"🪐",
@@ -363,42 +413,52 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
                 toAsciiString(metadata1.burnerAccount)
             )
         );
+        output = string(abi.encodePacked(output, cache));
 
-        parts[12] = '</text><text x="10" y="140" class="base">';
+        //parts[12]
+        cache = '</text><text x="10" y="140" class="base">';
+        output = string(abi.encodePacked(output, cache));
 
+        //parts[13]
         if (metadata1.rank != 0)
-            parts[13] = string(
+            cache = string(
                 abi.encodePacked("Rank: ", toString(metadata1.rank))
             );
-        else parts[13] = string(abi.encodePacked("Rank: ", unicode"∞"));
+        else cache = string(abi.encodePacked("Rank: ", unicode"∞"));
 
         if (
             metadata1.score !=
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         ) {
-            parts[13] = string(
-                abi.encodePacked(
-                    parts[13],
-                    " | Score: ",
-                    toString(metadata1.score)
-                )
+            cache = string(
+                abi.encodePacked(cache, " | Score: ", toString(metadata1.score))
             );
         } else {
-            parts[13] = string(
-                abi.encodePacked(parts[13], " | Score: ", unicode"∞")
-            );
+            cache = string(abi.encodePacked(cache, " | Score: ", unicode"∞"));
         }
+        output = string(abi.encodePacked(output, cache));
 
-        parts[14] = '</text><text x="10" y="160" class="base">';
-        parts[15] = string(
-            abi.encodePacked(parts[15], "Silver: ", toString(metadata1.silver))
-        );
-        parts[15] = string(
-            abi.encodePacked(parts[15], " | Move: ", toString(metadata1.move))
+        //parts[14]
+        cache = '</text><text x="10" y="160" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        // parts[15]
+        cache = string(
+            abi.encodePacked(cache, "Silver: ", toString(metadata1.silver))
         );
 
-        parts[16] = '</text><text x="10" y="180" class="base">';
-        parts[17] = string(
+        cache = string(
+            abi.encodePacked(cache, " | Move: ", toString(metadata1.move))
+        );
+
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[16]
+        cache = '</text><text x="10" y="180" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[17]
+        cache = string(
             abi.encodePacked(
                 "Acitvate ",
                 toString(metadata2.activateArtifactAmount),
@@ -407,11 +467,16 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         );
 
         if (metadata2.activateArtifactAmount > 1) {
-            parts[17] = string(abi.encodePacked(parts[17], "s"));
+            cache = string(abi.encodePacked(cache, "s"));
         }
+        output = string(abi.encodePacked(output, cache));
 
-        parts[18] = '</text><text x="10" y="200" class="base">';
-        parts[19] = string(
+        // parts[18]
+        cache = '</text><text x="10" y="200" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        // parts[19]
+        cache = string(
             abi.encodePacked(
                 "Drop ",
                 toString(metadata2.dropBombAmount),
@@ -420,28 +485,42 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         );
 
         if (metadata2.dropBombAmount > 1) {
-            parts[19] = string(abi.encodePacked(parts[19], "s"));
+            cache = string(abi.encodePacked(cache, "s"));
         }
 
-        parts[20] = '</text><text x="10" y="220" class="base">';
-        parts[21] = string(
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[20]
+
+        cache = '</text><text x="10" y="220" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[21]
+        cache = string(
             abi.encodePacked("Pink ", toString(metadata2.pinkAmount), " planet")
         );
 
         if (metadata2.pinkAmount > 1) {
-            parts[21] = string(abi.encodePacked(parts[21], "s"));
+            cache = string(abi.encodePacked(cache, "s"));
         }
 
-        parts[22] = '</text><text x="10" y="240" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        //   parts[22]
+        cache = '</text><text x="10" y="240" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[23]
+
         if (metadata2.pinkedAmount < 2) {
-            parts[23] = string(
+            cache = string(
                 abi.encodePacked(
                     toString(metadata2.pinkedAmount),
                     " planet destroyed by others"
                 )
             );
         } else {
-            parts[23] = string(
+            cache = string(
                 abi.encodePacked(
                     toString(metadata2.pinkedAmount),
                     " planets destroyed by others"
@@ -449,61 +528,38 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
             );
         }
 
-        parts[24] = '</text><text x="10" y="260" class="base">';
+        output = string(abi.encodePacked(output, cache));
 
-        parts[25] = string(
+        //parts[24]
+        cache = '</text><text x="10" y="260" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[25]
+        cache = string(
             abi.encodePacked("Wear ", toString(metadata2.hatCount), " hat")
         );
-
         if (metadata2.hatCount > 1) {
-            parts[25] = string(abi.encodePacked(parts[25], "s"));
+            cache = string(abi.encodePacked(cache, "s"));
         }
+        output = string(abi.encodePacked(output, cache));
 
-        parts[26] = '</text><text x="10" y="280" class="base">';
+        //parts[26]
+        cache = '</text><text x="10" y="280" class="base">';
+        output = string(abi.encodePacked(output, cache));
 
+        //parts[27]
         if (metadata2.ifFirstBurnLocationOperator) {
-            parts[27] = string(abi.encodePacked(unicode"😈"));
+            cache = string(abi.encodePacked(unicode"😈"));
         } else if (metadata2.ifFirstBurnLocationOperator) {
-            parts[27] = string(abi.encodePacked(unicode"💣"));
+            cache = string(abi.encodePacked(unicode"💣"));
         } else if (metadata2.ifFirstHat) {
-            parts[27] = string(abi.encodePacked(unicode"🎩"));
+            cache = string(abi.encodePacked(unicode"🎩"));
         }
+        output = string(abi.encodePacked(output, cache));
 
-        parts[28] = "</text></svg>";
-
-        string memory output = string(
-            abi.encodePacked(
-                parts[0],
-                parts[1],
-                parts[2],
-                parts[3],
-                parts[4],
-                parts[5],
-                parts[6],
-                parts[7],
-                parts[8],
-                parts[9],
-                parts[10],
-                parts[11],
-                parts[12],
-                parts[13],
-                parts[14],
-                parts[15],
-                parts[16],
-                parts[17],
-                parts[18],
-                parts[19],
-                parts[20],
-                parts[21],
-                parts[22],
-                parts[23],
-                parts[24],
-                parts[25],
-                parts[26],
-                parts[27],
-                parts[28]
-            )
-        );
+        //parts[28]
+        cache = "</text></svg>";
+        output = string(abi.encodePacked(output, cache));
 
         string memory json = Base64.encode(
             bytes(
