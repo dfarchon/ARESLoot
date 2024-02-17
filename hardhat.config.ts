@@ -7,6 +7,7 @@ import "./task/deploy";
 import "./task/query";
 import "./task/mint";
 import "./task/admin";
+import "./task/bonus";
 
 
 const { DEPLOYER_MNEMONIC } = process.env;

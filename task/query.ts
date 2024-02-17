@@ -23,7 +23,6 @@ async function queryPlayerSilver(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
 
   const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
 
-
   const tokenId = 46;
   let owner = await ARESLoot.ownerOf(tokenId);
   let tokenURI = await ARESLoot.tokenURI(tokenId);
@@ -51,20 +50,67 @@ async function queryMetadata(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
 
   const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
 
-
   const supply = await ARESLoot.totalSupply();
   console.log(supply.toString());
 
   const beginTokenId = 46;
   let ids = [];
-  for(let i=0;i<supply;i++){
-    const id = i+beginTokenId;
+  for (let i = 0; i < supply; i++) {
+    const id = i + beginTokenId;
     ids.push(id);
   }
   const metadata1 = await ARESLoot.bulkGetMetadata1(ids);
 
-  for(let i = 0;i<metadata1.length;i++){
-    console.log(metadata1[i].burnerAccount.toLowerCase(), metadata1[i].mainAccount.toLowerCase());
+  for (let i = 0; i < metadata1.length; i++) {
+    console.log(
+      metadata1[i].burnerAccount.toLowerCase(),
+      metadata1[i].mainAccount.toLowerCase()
+    );
   }
 }
 
+task("contributor", "analysis contributor")
+  .addPositionalParam(
+    "filePath",
+    "the path to the file",
+    undefined,
+    types.string
+  )
+  .setAction(analysisContributor);
+
+async function analysisContributor(
+  args: { filePath: string },
+  hre: HardhatRuntimeEnvironment
+) {
+  // need to force a compile for tasks
+  await hre.run("compile");
+
+  const [player] = await hre.ethers.getSigners();
+
+  const filePath = process.env.DEPLOY_LOG?.toString();
+
+  const fileContents = fs.readFileSync(filePath!).toString();
+  const ContractAddress = fileContents.split("\n").filter((k) => k.length > 0);
+
+  const ARESLootAddress = ContractAddress.at(-1);
+  const aresLootAddress = ARESLootAddress;
+  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+
+  const keyFileContents = fs.readFileSync(args.filePath).toString();
+  const info = keyFileContents.split("\n").filter((k) => k.length > 0);
+
+  for (let i = 0; i < info.length; i++) {
+    const contributorInfo = info[i].split(" ");
+    const name = contributorInfo[0];
+    const burnerAccount = contributorInfo[1];
+    if (hre.ethers.isAddress(burnerAccount)) {
+      const mintId = await ARESLoot.getMinted(burnerAccount);
+      const formatId = mintId.toString();
+      if (formatId !== "0") {
+        console.log(name, burnerAccount, formatId);
+      } else {
+        console.log(name, burnerAccount, "not mint yet");
+      }
+    } else console.log(name, "No burner account");
+  }
+}
