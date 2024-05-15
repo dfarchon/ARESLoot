@@ -30,6 +30,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
  * ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ *
  *****************************************************/
 
+// Player struct for Round 3
 struct Player {
     bool isInitialized;
     address player;
@@ -50,31 +51,46 @@ struct Player {
     uint256 pinkedAmount;
     uint256 moveCount;
     uint256 hatCount;
+    uint256 kardashevAmount;
+    uint256 buyPlanetAmount;
+    uint256 buySpaceshipAmount;
+    uint256 donationAmount;
 }
 
-// DF ARES v0.1 Round 2
-// Ticket # num
-// [Adventurer|Contributor]: name | team name
-// homePlanetId
-
-// mainAccount
-// burnerAccount
-// rank => 0 | score => 0 | silver => 0 | move => 0
-// acitvate x artifact(s) activateArtifactAmount => 0
-
-// drop x bomb(s)    dropBombAmount => 0
-// pink x planet(s)  pinkAmount => 0
-// x planet(s) destroyed by others.  pinkedAmount => 0
-// wear x hat(s)
-
-// first Mythic Artifact Owner
-// first BurnLocation Operator
-// first hat buyer
+struct PlayerLog {
+    uint256 buySkinCnt;
+    uint256 buySkinCost;
+    uint256 takeOffSkinCnt;
+    uint256 withdrawSilverCnt;
+    uint256 claimLocationCnt;
+    uint256 changeArtifactImageTypeCnt;
+    uint256 deactivateArtifactCnt;
+    uint256 prospectPlanetCnt;
+    uint256 findArtifactCnt;
+    uint256 depositArtifactCnt;
+    uint256 withdrawArtifactCnt;
+    uint256 kardashevCnt;
+    uint256 blueLocationCnt;
+    uint256 createLobbyCnt;
+    uint256 moveCnt;
+    uint256 burnLocationCnt;
+    uint256 pinkLocationCnt;
+    uint256 buyPlanetCnt;
+    uint256 buyPlanetCost;
+    uint256 buySpaceshipCnt;
+    uint256 buySpaceshipCost;
+    uint256 donateCnt;
+    uint256 donateSum;
+}
 
 interface IDFAres {
     function isWhitelisted(address _addr) external view returns (bool);
 
     function players(address key) external view returns (Player memory);
+
+    function getPlayerLog(
+        address addr
+    ) external view returns (PlayerLog memory);
 
     function getScore(address player) external view returns (uint256);
 
@@ -82,10 +98,30 @@ interface IDFAres {
 
     function getFirstBurnLocationOperator() external view returns (address);
 
-    function getFirstHat() external view returns (address);
+    function getFirstKardashevOperator() external view returns (address);
 }
 
-contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
+// DF ARES v0.1 Round 3
+// Ticket # num
+// [Adventurer|Contributor]: name |
+// team name
+// mainAccount
+// burnerAccount
+// rank => 0 | score => 0 | silver => 0 | move => 0
+
+// find x artifact(s) findArtifactCnt => 0
+// acitvate x artifact(s) activateArtifactAmount => 0
+
+// drop x bomb(s)    dropBombAmount => 0
+// pink x planet(s)  pinkAmount => 0
+// x planet(s) destroyed by others.  pinkedAmount => 0
+
+// first Mythic Artifact Owner
+// first BurnLocation Operator
+// first hat buyer
+// first kardashev Operator
+
+contract AresEpic is ERC721Enumerable, ReentrancyGuard, Ownable {
     modifier notFrozen() {
         require(!frozen, "already frozen");
         _;
@@ -116,7 +152,7 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     // 1 => contributor
     mapping(address => uint) roles;
 
-    uint private _tokenIdCounter; // Ticket 46 - x
+    uint private _tokenIdCounter; // Ticket 90 - x
 
     struct Metadata1 {
         uint role;
@@ -132,14 +168,14 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     struct Metadata2 {
+        uint findArtifactAmount;
         uint activateArtifactAmount;
         uint dropBombAmount;
         uint pinkAmount;
         uint pinkedAmount;
-        uint hatCount;
         bool ifFirstMythicArtifactOwner;
         bool ifFirstBurnLocationOperator;
-        bool ifFirstHat;
+        bool ifFirstKardashevOperator;
     }
 
     mapping(uint256 => Metadata1) public metadataStorage1;
@@ -148,10 +184,10 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     constructor(
         IDFAres _DFAresContract
-    ) ERC721("ARESLoot v0.1.2", "ARES") Ownable(_msgSender()) {
+    ) ERC721("Ares Epic v0.1.3", "ARES") Ownable(_msgSender()) {
         DFAresContract = _DFAresContract;
         frozen = true;
-        _tokenIdCounter = 45; // first tokenId = 46
+        _tokenIdCounter = 89; // first tokenId = 90
     }
 
     // admin
@@ -257,6 +293,7 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
         // Tip: need admin to upload ranklist first
         Player memory player = DFAresContract.players(burnerAccount);
+        PlayerLog memory playerLog = DFAresContract.getPlayerLog(burnerAccount);
 
         require(
             (roles[burnerAccount] == 0 && player.finalRank != 0) ||
@@ -281,16 +318,19 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         metadata1.score = DFAresContract.getScore(burnerAccount);
         metadata1.silver = player.silver;
         metadata1.move = player.moveCount;
+
+        metadata2.findArtifactAmount = playerLog.findArtifactCnt;
         metadata2.activateArtifactAmount = player.activateArtifactAmount;
         metadata2.dropBombAmount = player.dropBombAmount;
         metadata2.pinkAmount = player.pinkAmount;
         metadata2.pinkedAmount = player.pinkedAmount;
-        metadata2.hatCount = player.hatCount;
         metadata2.ifFirstMythicArtifactOwner =
             DFAresContract.getFirstMythicArtifactOwner() == burnerAccount;
         metadata2.ifFirstBurnLocationOperator =
             DFAresContract.getFirstBurnLocationOperator() == burnerAccount;
-        metadata2.ifFirstHat = DFAresContract.getFirstHat() == burnerAccount;
+        metadata2.ifFirstKardashevOperator =
+            DFAresContract.getFirstKardashevOperator() == burnerAccount;
+
         _safeMint(_msgSender(), tokenId);
     }
 
@@ -300,25 +340,31 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         Metadata1 storage metadata1 = metadataStorage1[tokenId];
         Metadata2 storage metadata2 = metadataStorage2[tokenId];
         address burnerAccount = metadata1.burnerAccount;
-
         Player memory player = DFAresContract.players(burnerAccount);
-        metadata1.role = roles[burnerAccount];
+        PlayerLog memory playerLog = DFAresContract.getPlayerLog(burnerAccount);
 
+        metadata1.role = roles[burnerAccount];
+        // metadata1.playerName = playerName;
+        // metadata1.teamName = teamName;
         metadata1.homePlanetId = player.homePlanetId;
+        // metadata1.mainAccount = mainAccount;
+        metadata1.burnerAccount = burnerAccount;
         metadata1.rank = player.finalRank;
         metadata1.score = DFAresContract.getScore(burnerAccount);
         metadata1.silver = player.silver;
         metadata1.move = player.moveCount;
+
+        metadata2.findArtifactAmount = playerLog.findArtifactCnt;
         metadata2.activateArtifactAmount = player.activateArtifactAmount;
         metadata2.dropBombAmount = player.dropBombAmount;
         metadata2.pinkAmount = player.pinkAmount;
         metadata2.pinkedAmount = player.pinkedAmount;
-        metadata2.hatCount = player.hatCount;
         metadata2.ifFirstMythicArtifactOwner =
             DFAresContract.getFirstMythicArtifactOwner() == burnerAccount;
         metadata2.ifFirstBurnLocationOperator =
             DFAresContract.getFirstBurnLocationOperator() == burnerAccount;
-        metadata2.ifFirstHat = DFAresContract.getFirstHat() == burnerAccount;
+        metadata2.ifFirstKardashevOperator =
+            DFAresContract.getFirstKardashevOperator() == burnerAccount;
     }
 
     function batchHardRefreshMetadata(uint256[] memory tokenIds) public {
@@ -340,7 +386,7 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         output = string(abi.encodePacked(output, cache));
 
         //parts[1]
-        cache = string(abi.encodePacked("DF ARES v0.1 Round 2"));
+        cache = string(abi.encodePacked("Dark Forest Ares v0.1 Round 3"));
         output = string(abi.encodePacked(output, cache));
 
         //parts[2]
@@ -460,6 +506,23 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         //parts[17]
         cache = string(
             abi.encodePacked(
+                "Find ",
+                toString(metadata2.findArtifactAmount),
+                " artifact"
+            )
+        );
+        if (metadata2.findArtifactAmount > 1) {
+            cache = string(abi.encodePacked(cache, "s"));
+        }
+        output = string(abi.encodePacked(output, cache));
+
+        //parts[18]
+        cache = '</text><text x="10" y="200" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        // parts[19]
+        cache = string(
+            abi.encodePacked(
                 "Acitvate ",
                 toString(metadata2.activateArtifactAmount),
                 " artifact"
@@ -471,11 +534,11 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         }
         output = string(abi.encodePacked(output, cache));
 
-        // parts[18]
-        cache = '</text><text x="10" y="200" class="base">';
+        // parts[20]
+        cache = '</text><text x="10" y="220" class="base">';
         output = string(abi.encodePacked(output, cache));
 
-        // parts[19]
+        // parts[21]
         cache = string(
             abi.encodePacked(
                 "Drop ",
@@ -490,12 +553,11 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
         output = string(abi.encodePacked(output, cache));
 
-        //parts[20]
-
-        cache = '</text><text x="10" y="220" class="base">';
+        // parts[22]
+        cache = '</text><text x="10" y="240" class="base">';
         output = string(abi.encodePacked(output, cache));
 
-        //parts[21]
+        // parts[23]
         cache = string(
             abi.encodePacked("Pink ", toString(metadata2.pinkAmount), " planet")
         );
@@ -506,12 +568,11 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
         output = string(abi.encodePacked(output, cache));
 
-        //   parts[22]
-        cache = '</text><text x="10" y="240" class="base">';
+        // parts[24]
+        cache = '</text><text x="10" y="260" class="base">';
         output = string(abi.encodePacked(output, cache));
 
-        //parts[23]
-
+        // parts[25]
         if (metadata2.pinkedAmount < 2) {
             cache = string(
                 abi.encodePacked(
@@ -530,34 +591,25 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
         output = string(abi.encodePacked(output, cache));
 
-        //parts[24]
-        cache = '</text><text x="10" y="260" class="base">';
-        output = string(abi.encodePacked(output, cache));
-
-        //parts[25]
-        cache = string(
-            abi.encodePacked("Wear ", toString(metadata2.hatCount), " hat")
-        );
-        if (metadata2.hatCount > 1) {
-            cache = string(abi.encodePacked(cache, "s"));
-        }
-        output = string(abi.encodePacked(output, cache));
-
-        //parts[26]
+        // parts[26]
         cache = '</text><text x="10" y="280" class="base">';
         output = string(abi.encodePacked(output, cache));
 
-        //parts[27]
-        if (metadata2.ifFirstBurnLocationOperator) {
-            cache = string(abi.encodePacked(unicode"😈"));
+        // parts[27]
+        cache = '</text><text x="10" y="300" class="base">';
+        output = string(abi.encodePacked(output, cache));
+
+        // parts[28]
+        if (metadata2.ifFirstMythicArtifactOwner) {
+            cache = string(abi.encodePacked(unicode"🌟"));
         } else if (metadata2.ifFirstBurnLocationOperator) {
             cache = string(abi.encodePacked(unicode"💣"));
-        } else if (metadata2.ifFirstHat) {
-            cache = string(abi.encodePacked(unicode"🎩"));
+        } else if (metadata2.ifFirstKardashevOperator) {
+            cache = string(abi.encodePacked(unicode"🔷"));
         }
         output = string(abi.encodePacked(output, cache));
 
-        //parts[28]
+        // parts[28]
         cache = "</text></svg>";
         output = string(abi.encodePacked(output, cache));
 
@@ -567,7 +619,7 @@ contract ARESLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
                     abi.encodePacked(
                         '{"name": "Ticket #',
                         toString(tokenId),
-                        '", "description": "ARES Loot is the ticket to enter new world. ", "image": "data:image/svg+xml;base64,',
+                        '", "description": "Ares Epic is the ticket to enter new world.", "image": "data:image/svg+xml;base64,',
                         Base64.encode(bytes(output)),
                         '"}'
                     )

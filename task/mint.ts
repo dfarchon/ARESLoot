@@ -24,8 +24,11 @@ task("mint", "mint NFT")
     const ARESLootAddress = ContractAddress.at(-1);
     console.log('contract address: ',ARESLootAddress);
     const aresLootAddress = ARESLootAddress;
-    
-    const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+
+    const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
+
+    console.log('ok');
+    console.log(account1.address);
 
     const tx = await ARESLoot.mint(
         account2.address,
@@ -38,7 +41,7 @@ task("mint", "mint NFT")
     console.log("tx hash:" + tx.hash);
     console.log("mint success");
     
-    const tokenId = 46;
+    const tokenId = 90;
     let owner = await ARESLoot.ownerOf(tokenId);
   let tokenURI = await ARESLoot.tokenURI(tokenId);
   console.log("Token Id -> " + tokenId);

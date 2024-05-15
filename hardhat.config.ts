@@ -30,13 +30,23 @@ const redstoneTN = {
   chainId: Number(process.env.REDSTONE_TESTNET_CHAINID),
 };
 
+const redstone = {
+  url: process.env.REDSTONE_RPC_URL,
+  accounts: {
+      mnemonic: process.env.DEPLOYER_MNEMONIC,
+  },
+  chainId: Number(process.env.REDSTONE_CHAINID),
+}
+
+
 
 const config: HardhatUserConfig = {
   defaultNetwork: "localhost",
   networks: {
     // Check for a DEPLOYER_MNEMONIC before we add  network to the list of networks
     ...(DEPLOYER_MNEMONIC ? { localhost } : undefined),
-    ...(DEPLOYER_MNEMONIC? {redstoneTN}:undefined)
+    ...(DEPLOYER_MNEMONIC? {redstoneTN}:undefined),
+    ...(DEPLOYER_MNEMONIC? {redstone}:undefined),
   },
 
   solidity: {

@@ -21,9 +21,9 @@ async function queryPlayerSilver(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
-  const tokenId = 46;
+  const tokenId = 90;
   let owner = await ARESLoot.ownerOf(tokenId);
   let tokenURI = await ARESLoot.tokenURI(tokenId);
   console.log("Token Id -> " + tokenId);
@@ -48,7 +48,7 @@ async function queryMetadata(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   const supply = await ARESLoot.totalSupply();
   console.log(supply.toString());
@@ -94,7 +94,7 @@ async function analysisContributor(
 
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   const keyFileContents = fs.readFileSync(args.filePath).toString();
   const info = keyFileContents.split("\n").filter((k) => k.length > 0);

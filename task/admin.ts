@@ -33,7 +33,7 @@ async function adminBatchSetRoles(
   const aresLootAddress = ARESLootAddress;
   console.log('AresLoot address:',aresLootAddress);
 
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   const keyFileContents = fs.readFileSync(args.filePath).toString();
   const info = keyFileContents.split("\n").filter((k) => k.length > 0);
@@ -87,7 +87,7 @@ async function adminChangeName(
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   try {
     const receipt = await ARESLoot.adminChangeName(
@@ -128,7 +128,7 @@ async function adminChangeMainAccount(
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   try {
     const receipt = await ARESLoot.adminChangeMainAccount(
@@ -167,7 +167,7 @@ async function freeze(
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   try {
     const receipt = await ARESLoot.freeze(overrides);
@@ -198,7 +198,7 @@ async function thaw(
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   try {
     const receipt = await ARESLoot.thaw(overrides);
@@ -229,7 +229,7 @@ async function hardRefreshBurnerAccount(
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   try {
     console.log('burner account:',args.account);
@@ -268,7 +268,7 @@ async function getTokenURI(
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
 
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   try {
   

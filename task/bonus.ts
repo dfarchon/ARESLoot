@@ -28,7 +28,7 @@ async function getRankBonus(
 
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   const keyFileContents = fs.readFileSync(args.filePath).toString();
   const info = keyFileContents.split("\n").filter((k) => k.length > 0);
@@ -102,7 +102,7 @@ async function getBoardcastBonus(
 
   const ARESLootAddress = ContractAddress.at(-1);
   const aresLootAddress = ARESLootAddress;
-  const ARESLoot = await hre.ethers.getContractAt("ARESLoot", aresLootAddress!);
+  const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
   const keyFileContents = fs.readFileSync(args.filePath).toString();
   const info = keyFileContents.split("\n").filter((k) => k.length > 0);
