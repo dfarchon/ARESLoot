@@ -20,11 +20,11 @@ async function deploy(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
 
   const Loot = await hre.ethers.getContractFactory("AresEpic");
   // test 
-  // const gameAddress = "0x8950bab77f29e8f81e6f78aea0a79badd88eeb13";
+  // const gameAddress = '0x500cf53555c09948f4345594f9523e7b444cd67e';
   // round 2
   // const gameAddress = '0x9bebf120d985cb8835634e3c8565d320f79aac76';
   // round 3
-  const gameAddress = '0x500cf53555c09948f4345594f9523e7b444cd67e';
+  const gameAddress = '0xa0e198cbd1b5f8749f57aa8d60a8660d23b96957';
 
   const loot = await Loot.deploy(gameAddress,overrides);
 

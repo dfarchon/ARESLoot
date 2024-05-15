@@ -53,7 +53,7 @@ async function queryMetadata(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
   const supply = await ARESLoot.totalSupply();
   console.log(supply.toString());
 
-  const beginTokenId = 46;
+  const beginTokenId = 90;
   let ids = [];
   for (let i = 0; i < supply; i++) {
     const id = i + beginTokenId;
