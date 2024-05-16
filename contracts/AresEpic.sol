@@ -595,9 +595,9 @@ contract AresEpic is ERC721Enumerable, ReentrancyGuard, Ownable {
         cache = '</text><text x="10" y="280" class="base">';
         output = string(abi.encodePacked(output, cache));
 
-        // parts[27]
-        cache = '</text><text x="10" y="300" class="base">';
-        output = string(abi.encodePacked(output, cache));
+        // parts[27] => round 4 
+        // cache = '</text><text x="10" y="300" class="base">';
+        // output = string(abi.encodePacked(output, cache));
 
         // parts[28]
         if (metadata2.ifFirstMythicArtifactOwner) {
