@@ -23,7 +23,7 @@ async function queryPlayerSilver(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
 
   const ARESLoot = await hre.ethers.getContractAt("AresEpic", aresLootAddress!);
 
-  const tokenId = 90;
+  const tokenId = 121;
   let owner = await ARESLoot.ownerOf(tokenId);
   let tokenURI = await ARESLoot.tokenURI(tokenId);
   console.log("Token Id -> " + tokenId);
@@ -53,15 +53,17 @@ async function queryMetadata(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
   const supply = await ARESLoot.totalSupply();
   console.log(supply.toString());
 
-  const beginTokenId = 90;
+  const beginTokenId = 121;
   let ids = [];
   for (let i = 0; i < supply; i++) {
     const id = i + beginTokenId;
     ids.push(id);
   }
   const metadata1 = await ARESLoot.bulkGetMetadata1(ids);
+  
 
   for (let i = 0; i < metadata1.length; i++) {
+    // console.log(metadata1[i]);
     console.log(
       metadata1[i].burnerAccount.toLowerCase(),
       metadata1[i].mainAccount.toLowerCase()

@@ -40,7 +40,7 @@ task("mint", "mint NFT")
     console.log("tx hash:" + tx.hash);
     console.log("mint success");
     
-    const tokenId = 90;
+    const tokenId = 120;
     let owner = await ARESLoot.ownerOf(tokenId);
   let tokenURI = await ARESLoot.tokenURI(tokenId);
   console.log("Token Id -> " + tokenId);

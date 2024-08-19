@@ -166,7 +166,7 @@ contract AresEpic is ERC721Enumerable, ReentrancyGuard, Ownable {
     // 1 => contributor
     mapping(address => uint) roles;
 
-    uint private _tokenIdCounter; // Ticket 90 - x
+    uint private _tokenIdCounter; // Ticket 121 - x
 
     struct Metadata1 {
         uint role;
