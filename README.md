@@ -1,11 +1,19 @@
+# Ares Epic v0.1.4
+Ares Epic is deployed on Redstone Mainnet
+
+Contract Address => 0x04aa4eca2a4cc7f9a911440a614392a52da98167
+
+
+
+
+
 # Ares Epic v0.1.3
 
 Ares Epic is deployed on Redstone Mainnet
 
+Contract Address => 0x35aFe4FE41f33Df506A0662cfc631Bf2Bcd843df 
+
 <img width="512" alt="ARESLoot-v0 1 Round 2" src="https://github.com/dfarchon/ARESLoot/assets/25214732/c20e9b1b-1050-48b5-a984-2faa4ab3e107">
-
-
-
 
 
 
