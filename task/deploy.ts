@@ -24,7 +24,9 @@ async function deploy(taskArgs: {}, hre: HardhatRuntimeEnvironment) {
   // round 2
   // const gameAddress = '0x9bebf120d985cb8835634e3c8565d320f79aac76';
   // round 3
-  const gameAddress = '0xa0e198cbd1b5f8749f57aa8d60a8660d23b96957';
+  // const gameAddress = '0x78978d53e07e8a45830e2a623a3c58e2e1fecd4c';
+  // round 4 
+  const gameAddress = '0x962847b239b1103d4c8b4eb67bc663ac32a6aeb7';
 
   const loot = await Loot.deploy(gameAddress,overrides);
 

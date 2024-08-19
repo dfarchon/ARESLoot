@@ -30,7 +30,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
  * ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ *
  *****************************************************/
 
-// Player struct for Round 3
+// Player struct for Round 4
 struct Player {
     bool isInitialized;
     address player;
@@ -54,7 +54,9 @@ struct Player {
     uint256 kardashevAmount;
     uint256 buyPlanetAmount;
     uint256 buySpaceshipAmount;
-    uint256 donationAmount;
+    uint256 donationAmount; // amount (ether) * CONTRACT_PERCISION
+    uint256 unionId;
+    uint256 leaveUnionTimestamp;
 }
 
 struct PlayerLog {
@@ -83,10 +85,22 @@ struct PlayerLog {
     uint256 donateSum;
 }
 
+struct Union {
+    uint256 unionId;
+    string name;
+    address leader;
+    uint256 level;
+    address[] members;
+    address[] invitees;
+    address[] applicants;
+}
+
 interface IDFAres {
     function isWhitelisted(address _addr) external view returns (bool);
 
     function players(address key) external view returns (Player memory);
+
+    function unions(uint256 key) external view returns(Union memory);
 
     function getPlayerLog(
         address addr
@@ -101,10 +115,10 @@ interface IDFAres {
     function getFirstKardashevOperator() external view returns (address);
 }
 
-// DF ARES v0.1 Round 3
+// DF ARES v0.1 Round 4
 // Ticket # num
 // [Adventurer|Contributor]: name |
-// team name
+// union name
 // mainAccount
 // burnerAccount
 // rank => 0 | score => 0 | silver => 0 | move => 0
@@ -184,10 +198,10 @@ contract AresEpic is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     constructor(
         IDFAres _DFAresContract
-    ) ERC721("Ares Epic v0.1.3", "ARES") Ownable(_msgSender()) {
+    ) ERC721("Ares Epic v0.1.4", "ARES") Ownable(_msgSender()) {
         DFAresContract = _DFAresContract;
         frozen = true;
-        _tokenIdCounter = 89; // first tokenId = 90
+        _tokenIdCounter = 120; // first tokenId = 121
     }
 
     // admin
@@ -278,8 +292,7 @@ contract AresEpic is ERC721Enumerable, ReentrancyGuard, Ownable {
     // player
     function mint(
         address mainAccount,
-        string memory playerName,
-        string memory teamName
+        string memory playerName
     ) public nonReentrant notFrozen onlyEOA {
         address burnerAccount = _msgSender();
 
@@ -288,12 +301,13 @@ contract AresEpic is ERC721Enumerable, ReentrancyGuard, Ownable {
         require(burnerAccount != mainAccount, "burnerAccount != mainAccount");
 
         require(len(playerName) <= 20, "player name too long");
-        require(len(teamName) <= 40, "team name too long");
+        // require(len(teamName) <= 40, "team name too long");
         require(minted[burnerAccount] == 0, "minted");
 
         // Tip: need admin to upload ranklist first
         Player memory player = DFAresContract.players(burnerAccount);
         PlayerLog memory playerLog = DFAresContract.getPlayerLog(burnerAccount);
+        Union memory union = DFAresContract.unions(player.unionId);
 
         require(
             (roles[burnerAccount] == 0 && player.finalRank != 0) ||
@@ -310,7 +324,7 @@ contract AresEpic is ERC721Enumerable, ReentrancyGuard, Ownable {
         Metadata2 storage metadata2 = metadataStorage2[tokenId];
         metadata1.role = roles[burnerAccount];
         metadata1.playerName = playerName;
-        metadata1.teamName = teamName;
+        metadata1.teamName = union.name;
         metadata1.homePlanetId = player.homePlanetId;
         metadata1.mainAccount = mainAccount;
         metadata1.burnerAccount = burnerAccount;
@@ -342,10 +356,11 @@ contract AresEpic is ERC721Enumerable, ReentrancyGuard, Ownable {
         address burnerAccount = metadata1.burnerAccount;
         Player memory player = DFAresContract.players(burnerAccount);
         PlayerLog memory playerLog = DFAresContract.getPlayerLog(burnerAccount);
+        Union memory union = DFAresContract.unions(player.unionId);
 
         metadata1.role = roles[burnerAccount];
         // metadata1.playerName = playerName;
-        // metadata1.teamName = teamName;
+        metadata1.teamName = union.name;
         metadata1.homePlanetId = player.homePlanetId;
         // metadata1.mainAccount = mainAccount;
         metadata1.burnerAccount = burnerAccount;
@@ -386,7 +401,7 @@ contract AresEpic is ERC721Enumerable, ReentrancyGuard, Ownable {
         output = string(abi.encodePacked(output, cache));
 
         //parts[1]
-        cache = string(abi.encodePacked("Dark Forest Ares v0.1 Round 3"));
+        cache = string(abi.encodePacked("Dark Forest Ares v0.1 Round 4"));
         output = string(abi.encodePacked(output, cache));
 
         //parts[2]

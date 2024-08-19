@@ -33,7 +33,6 @@ task("mint", "mint NFT")
     const tx = await ARESLoot.mint(
         account2.address,
         'DFAresHero',
-        'Dark Forest Community',
         overrides
     );
    
